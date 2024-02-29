@@ -12,6 +12,165 @@
         #multipleCityWeatherList {
             list-style-type: none;
             padding: 0;
+        }
+        #multipleCityWeatherList li {
+            margin-bottom: 1em;
+        }
+        #rightInfoBox {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>请选择或添加城市查询天气</h2>
+    
+    <div id="citiesList"></div>
+
+    <form id="addCityForm">
+        <label for="newCityInput">新增城市名：</label>
+        <input type="text" id="newCityInput" placeholder="例如：北京">
+        <button type="submit">新增并查询天气</button>
+    </form>
+
+    <button id="clearAllCities">清除所有城市</button>
+    <div id="rightInfoBox">
+        <div id="currentInfo">
+            <!-- 显示所选城市信息 -->
+            <p id="selectedCityInfo"></p>
+        </div>
+    </div>
+    <div id="multipleCityWeatherList">
+        <!-- 多个城市天气将在此显示 -->
+    </div>
+
+    <script>
+        const apiKey = '3aa5d4d50fc64d6287801928ab1d6082'; // 替换为您的QWeather API密钥
+        const savedCities = JSON.parse(localStorage.getItem('savedCities')) || [];
+
+        async function getCityIdByName(cityName) {
+            const geoApiUrl = `https://geoapi.qweather.com/v2/city/lookup?key=${apiKey}&location=${encodeURIComponent(cityName)}`;
+
+            try {
+                const response = await fetch(geoApiUrl);
+                const data = await response.json();
+
+                if (data.code === '200' && data.location && data.location.length > 0) {
+                    return data.location[0].id;
+                } else {
+                    throw new Error('未能找到对应的城市ID');
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function fetchWeatherData(cityId) {
+            const weatherApiUrl = `https://devapi.qweather.com/v7/weather/3d?location=${cityId}&key=${apiKey}`;
+            const weatherResponse = await fetch(weatherApiUrl);
+            const weatherData = await weatherResponse.json();
+            return weatherData;
+        }
+
+        async function displaySequentialWeatherForCities(cities) {
+            let selectedCityInfoContent = '';
+            for (const city of cities) {
+                try {
+                    const cityId = await getCityIdByName(city);
+                    const weatherData = await fetchWeatherData(cityId);
+                    const today = weatherData.daily[0];
+                    const tomorrow = weatherData.daily[1];
+                    const todayWeekday = new Date(today.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+                    const tomorrowWeekday = new Date(today.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+
+                    selectedCityInfoContent += `
+                        <p>【${city}】${tomorrow.tempMax}℃ — ${tomorrow.tempMin}℃  ${tomorrow.textDay}</p>
+                    `;
+                } catch (error) {
+                    console.error(`获取${city}天气信息时出错`, error);
+                }
+            }
+            document.getElementById('selectedCityInfo').innerHTML = selectedCityInfoContent;
+        }
+
+        async function addAndSaveCity(cityName) {
+            if (!savedCities.includes(cityName)) {
+                savedCities.push(cityName);
+                localStorage.setItem('savedCities', JSON.stringify(savedCities));
+                loadCityOptions();
+
+                // 显示新添加城市的天气
+                await displaySequentialWeatherForCities([cityName]);
+            } else {
+                alert('该城市已存在，无需重复添加！');
+            }
+        }
+
+        function loadCityOptions() {
+            const citiesList = document.getElementById('citiesList');
+            citiesList.innerHTML = '';
+            savedCities.forEach(city => {
+                const cityOption = document.createElement('label');
+                cityOption.textContent = city;
+                citiesList.appendChild(cityOption);
+            });
+
+            // 添加一个查询所有城市天气的按钮，并绑定事件监听器
+            const multiCityButton = document.createElement('button');
+            multiCityButton.textContent = '查询所有城市天气';
+            multiCityButton.addEventListener('click', async () => {
+                await displaySequentialWeatherForCities(savedCities);
+            });
+            citiesList.appendChild(multiCityButton);
+
+            // 添加一个清除所有城市按钮，并绑定事件监听器
+            const clearAllCitiesButton = document.getElementById('clearAllCities');
+            clearAllCitiesButton.addEventListener('click', () => {
+                localStorage.removeItem('savedCities');
+                savedCities.length = 0;
+                citiesList.innerHTML = '';
+                document.getElementById('multipleCityWeatherList').innerHTML = '';
+                document.getElementById('selectedCityInfo').innerHTML = '';
+            });
+        }
+
+        document.getElementById('addCityForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const cityName = document.getElementById('newCityInput').value.trim();
+            if (cityName !== '') {
+                await addAndSaveCity(cityName);
+                document.getElementById('newCityInput').value = '';
+            } else {
+                alert('请输入城市名称!');
+            }
+        });
+
+        // 页面加载完成后加载已保存城市
+        loadCityOptions();
+    </script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气查询</title>
+    <style>
+        #citiesList label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #multipleCityWeatherList {
+            list-style-type: none;
+            padding: 0;
             overflow-y: auto; /* 添加滚动条 */
         }
         #multipleCityWeatherList li {
