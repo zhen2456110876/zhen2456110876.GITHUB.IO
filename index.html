@@ -87,15 +87,17 @@
             const weatherData = await weatherResponse.json();
             return weatherData;
         }
-   function getCurrentWeekday() {
-            const now = new Date();
-            return now.toLocaleDateString('zh-CN', { weekday: 'long' });
-        }
-        async function displaySequentialWeatherForCities(cities) {
-            document.getElementById('todayWeekday').textContent = `今天是：${getCurrentWeekday()}`;
-            let selectedCityInfoContent = '';
-            for (const city of cities) {
-                try {
+    function getNextWeekday() {
+        const now = new Date();
+        now.setDate(now.getDate() + 1); // 设置为明天日期
+        return now.toLocaleDateString('zh-CN', { weekday: 'long' });
+    }
+
+    async function displaySequentialWeatherForCities(cities) {
+        document.getElementById('todayWeekday').textContent = `明天是：${getNextWeekday()}`;
+        let selectedCityInfoContent = '';
+        for (const city of cities) {
+            try {
                     const cityId = await getCityIdByName(city);
                     const weatherData = await fetchWeatherData(cityId);
                     const today = weatherData.daily[0];
@@ -164,7 +166,7 @@
                 alert('请输入城市名称!');
             }
         });
-        document.getElementById('todayWeekday').textContent = `今天是：${getCurrentWeekday()}`;
+
         // 页面加载完成后加载已保存城市
         loadCityOptions();
     </script>
