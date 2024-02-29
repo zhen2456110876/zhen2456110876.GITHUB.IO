@@ -1,50 +1,163 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
-    <title>刷次数</title>
-    <link href="css/bootstrap.css" type="text/css" rel="stylesheet">
-    <link href="css/2.0.css" type="text/css" rel="stylesheet">
-    <script src="js/jquery.min.js"></script>
-    <script src="js/layer.min.js" type="application/javascript"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气查询</title>
+    <style>
+        #citiesList label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #multipleCityWeatherList {
+            list-style-type: none;
+            padding: 0;
+            overflow-y: auto; /* 添加滚动条 */
+        }
+        #multipleCityWeatherList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+        .city-name {
+            width: 30%;
+        }
+        .weather-data {
+            width: 65%;
+        }
+    </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="box col-12">
-            <div class="text-center alert alert-success mb-3" role="alert" id="content">
-                请输入你的 token
-            </div>
-            <div class="text-center alert alert-success mb-3" role="alert" id="content">
-                使用教程<br>
-                打开羊羊小程序，点击俺的名片,把ID记下来<br>
-                在上方输入自己的ID,获取Token<br>
-            </div>
-            <div class="form-inline uid mb-3 clearfix">
-                <div class="form-floating col-6">
-                    <input class="form-control" id="uid" placeholder="输入UID获取token" oninput="value=value.replace(/[^\d]/g,'')">
-                    <label for="token">输入UID获取token</label>
-                </div>
-                <button class="btn btn-secondary col-3 btn3">怎么查看</button>
-                <button class="btn btn-success col-3" id="get_token">点击获取 token</button>
-            </div>
-            <div class="form-floating mb-3">
-                <input class="form-control" id="token" placeholder="请输入你的 token">
-                <label for="token">请输入你的 token</label>
-            </div>
-            
-            <button class="btn btn-success col-12 mb-4" id="get_code">提交</button>
-          
-       
-        </div>
-    </div>
-    <script src="js/2.0.js"></script>
 
+    <h2>请选择或添加城市查询天气</h2>
+    
+    <div id="citiesList"></div>
+
+    <form id="addCityForm">
+        <label for="newCityInput">新增城市名：</label>
+        <input type="text" id="newCityInput" placeholder="例如：北京">
+        <button type="submit">新增并查询天气</button>
+    </form>
+
+    <button id="clearAllCities">清除所有城市</button>
+
+    <ul id="multipleCityWeatherList">
+        <!-- 多个城市天气将在此显示 -->
+    </ul>
+
+    <script>
+        const apiKey = '3aa5d4d50fc64d6287801928ab1d6082'; // 替换为您的QWeather API密钥
+        const savedCities = JSON.parse(localStorage.getItem('savedCities')) || [];
+
+        async function getCityIdByName(cityName) {
+        const geoApiUrl = `https://geoapi.qweather.com/v2/city/lookup?key=${apiKey}&location=${encodeURIComponent(cityName)}`;
+
+        try {
+            const response = await fetch(geoApiUrl);
+            const data = await response.json();
+
+            if (data.code === '200' && data.location && data.location.length > 0) {
+                return data.location[0].id;
+            } else {
+                throw new Error('未能找到对应的城市ID');
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+        async function displayWeatherForCity(cityName) {
+            try {
+            const cityId = await getCityIdByName(cityName);
+            const weatherApiUrl = `https://devapi.qweather.com/v7/weather/3d?location=${cityId}&key=${apiKey}`;
+
+            const weatherResponse = await fetch(weatherApiUrl);
+            const weatherData = await weatherResponse.json();
+
+                if (weatherData.code === '200' && weatherData.daily) {
+                    const today = weatherData.daily[0];
+                    const tomorrow = weatherData.daily[1];
+
+                    // 获取今天和明天的日期对应的星期几
+                    const todayWeekday = new Date(today.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+                    const tomorrowWeekday = new Date(tomorrow.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+
+                    // 创建今天的和明天的天气条目
+                    const todayWeatherItem = `
+                        <li>
+                            <span class="city-name">${cityName}（${todayWeekday}）</span>
+                            <span class="weather-data">${today.tempMax}℃ — ${today.tempMin}℃  ${today.textDay}</span>
+                        </li>
+                    `;
+                    const tomorrowWeatherItem = `
+                        <li>
+                            <span class="city-name">${cityName}（${tomorrowWeekday}）</span>
+                            <span class="weather-data">${tomorrow.tempMax}℃ — ${tomorrow.tempMin}℃  ${tomorrow.textDay}</span>
+                        </li>
+                    `;
+
+                    // 追加并滚动到新的天气信息
+                    const weatherList = document.getElementById('multipleCityWeatherList');
+                    const weatherListItems = document.createElement('div');
+                    weatherListItems.innerHTML = todayWeatherItem + tomorrowWeatherItem;
+                    weatherList.appendChild(weatherListItems);
+                    weatherList.scrollTop = weatherList.scrollHeight;
+                } else {
+                    console.error(`查询${cityName}天气信息失败，请检查输入的城市名是否正确。`);
+                }
+            } catch (error) {
+                console.error(`获取${cityName}天气信息时出错`, error);
+            }
+        }
+
+        async function addAndSaveCity(cityName) {
+        if (!savedCities.includes(cityName)) {
+            savedCities.push(cityName);
+            localStorage.setItem('savedCities', JSON.stringify(savedCities));
+
+            // 加载已保存的城市选项并显示当前城市天气
+            loadCityOptions();
+            await displayWeatherForCity(cityName);
+        } else {
+            alert('该城市已存在，无需重复添加！');
+        }
+    }
+
+
+        function loadCityOptions() {
+        const citiesList = document.getElementById('citiesList');
+        citiesList.innerHTML = '';
+        savedCities.forEach(city => {
+            const cityOption = document.createElement('label');
+            cityOption.textContent = city;
+            citiesList.appendChild(cityOption);
+        });
+
+        // 清除所有城市按钮及其事件监听器
+        const clearAllCitiesButton = document.getElementById('clearAllCities');
+        clearAllCitiesButton.addEventListener('click', () => {
+            localStorage.removeItem('savedCities');
+            savedCities.length = 0;
+            citiesList.innerHTML = '';
+        });
+    }
+
+        document.getElementById('addCityForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+        const cityName = document.getElementById('newCityInput').value.trim();
+        if (cityName !== '') {
+            await addAndSaveCity(cityName);
+            document.getElementById('newCityInput').value = '';
+        } else {
+            alert('请输入城市名称!');
+        }
+    });
+        // 页面加载完成后加载已保存城市并查询天气
+        loadCityOptions();
+        for (const city of savedCities) {
+            await displayWeatherForCity(city);
+        }
+    </script>
 
 </body>
-
 </html>
