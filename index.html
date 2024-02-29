@@ -41,9 +41,18 @@
     </form>
 
     <button id="clearAllCities">清除所有城市</button>
-    <div id="rightInfoBox">
+     <div id="rightInfoBox" style="
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 200px;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+        z-index: 1;">
         <div id="currentInfo">
-            <!-- 显示所选城市信息 -->
+            <!-- 显示今天日期及所选城市信息 -->
+            <p id="todayWeekday"></p>
             <p id="selectedCityInfo"></p>
         </div>
     </div>
@@ -78,8 +87,12 @@
             const weatherData = await weatherResponse.json();
             return weatherData;
         }
-
+   function getCurrentWeekday() {
+            const now = new Date();
+            return now.toLocaleDateString('zh-CN', { weekday: 'long' });
+        }
         async function displaySequentialWeatherForCities(cities) {
+            document.getElementById('todayWeekday').textContent = `今天是：${getCurrentWeekday()}`;
             let selectedCityInfoContent = '';
             for (const city of cities) {
                 try {
@@ -151,7 +164,7 @@
                 alert('请输入城市名称!');
             }
         });
-
+        document.getElementById('todayWeekday').textContent = `今天是：${getCurrentWeekday()}`;
         // 页面加载完成后加载已保存城市
         loadCityOptions();
     </script>
