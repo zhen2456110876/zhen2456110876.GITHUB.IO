@@ -87,33 +87,34 @@
             const weatherData = await weatherResponse.json();
             return weatherData;
         }
-nction getNextDateAndWeekday() {
+    function getNextWeekday() {
         const now = new Date();
         now.setDate(now.getDate() + 1); // 设置为明天日期
-        const tomorrowDate = now.toLocaleDateString('zh-CN'); // 获取明天的日期
-        const tomorrowWeekday = now.toLocaleDateString('zh-CN', { weekday: 'long' }); // 获取明天的星期几
-
-        return { date: tomorrowDate, weekday: tomorrowWeekday };
+        return now.toLocaleDateString('zh-CN', { weekday: 'long' });
     }
-ync function displaySequentialWeatherForCities(cities) {
-        const { date, weekday } = getNextDateAndWeekday();
-        document.getElementById('todayWeekday').textContent = `明天是：${weekday}（${date}）`;
 
+    async function displaySequentialWeatherForCities(cities) {
+        document.getElementById('todayWeekday').textContent = `明天是：${getNextWeekday()}`;
         let selectedCityInfoContent = '';
         for (const city of cities) {
             try {
-                const cityId = await getCityIdByName(city);
-                const weatherData = await fetchWeatherData(cityId);
-                const tomorrow = weatherData.daily[1];
-                selectedCityInfoContent += `
-                    <p>【${city}】${tomorrow.date}（${weekday}）：${tomorrow.tempMax}℃ — ${tomorrow.tempMin}℃  ${tomorrow.textDay}</p>
-                `;
-            } catch (error) {
-                console.error(`获取${city}天气信息时出错`, error);
+                    const cityId = await getCityIdByName(city);
+                    const weatherData = await fetchWeatherData(cityId);
+                    const today = weatherData.daily[0];
+                    const tomorrow = weatherData.daily[1];
+                    const todayWeekday = new Date(today.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+                    const tomorrowWeekday = new Date(today.fxDate).toLocaleDateString('zh-CN', { weekday: 'long' });
+
+                    selectedCityInfoContent += `
+                        <p>【${city}】${tomorrow.tempMax}℃ — ${tomorrow.tempMin}℃  ${tomorrow.textDay}</p>
+                    `;
+                } catch (error) {
+                    console.error(`获取${city}天气信息时出错`, error);
+                }
             }
+            document.getElementById('selectedCityInfo').innerHTML = selectedCityInfoContent;
         }
-        document.getElementById('selectedCityInfo').innerHTML = selectedCityInfoContent;
-    }
+
         async function addAndSaveCity(cityName) {
             if (!savedCities.includes(cityName)) {
                 savedCities.push(cityName);
