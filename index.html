@@ -87,18 +87,22 @@
             const weatherData = await weatherResponse.json();
             return weatherData;
         }
-    function getNextWeekday() {
+nction getNextDateAndWeekday() {
         const now = new Date();
         now.setDate(now.getDate() + 1); // 设置为明天日期
-        return now.toLocaleDateString('zh-CN', { weekday: 'long' });
-    }
+        const tomorrowDate = now.toLocaleDateString('zh-CN'); // 获取明天的日期
+        const tomorrowWeekday = now.toLocaleDateString('zh-CN', { weekday: 'long' }); // 获取明天的星期几
 
+        return { date: tomorrowDate, weekday: tomorrowWeekday };
+    }
     async function displaySequentialWeatherForCities(cities) {
-        document.getElementById('todayWeekday').textContent = `明天是：${getNextWeekday()}`;
+        const { date, weekday } = getNextDateAndWeekday();
+        document.getElementById('todayWeekday').textContent = `明天是：${weekday}（${date}）`;
+
         let selectedCityInfoContent = '';
         for (const city of cities) {
             try {
-                    const cityId = await getCityIdByName(city);
+                const cityId = await getCityIdByName(city);
                     const weatherData = await fetchWeatherData(cityId);
                     const today = weatherData.daily[0];
                     const tomorrow = weatherData.daily[1];
