@@ -101,7 +101,7 @@
 
     async function displaySequentialWeatherForCities(cities) {
            const { date, weekday } = getNextDateAndWeekday();
-           document.getElementById('todayWeekday').textContent = `${date} ${weekday}`;
+           document.getElementById('todayWeekday').textContent = `【${date}】 ${weekday}`;
         let selectedCityInfoContent = '';
         for (const city of cities) {
             try {
