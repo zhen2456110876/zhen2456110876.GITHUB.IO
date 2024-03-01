@@ -17,7 +17,7 @@
             margin-bottom: 1em;
         }
         #rightInfoBox {
-            position: fixed;
+
             top: 10px;
             right: 10px;
             width: 200px;
@@ -40,15 +40,18 @@
         <button type="submit">新增并查询天气</button>
     </form>
 
-    <button id="clearAllCities">清除所有城市</button>
+    <div class="actions">
+        <button id="clearAllCities">清除所有城市</button>
+        <button id="copyWeatherInfo">一键复制天气信息</button>
+    </div>
+
      <div id="rightInfoBox" style="
-        position: fixed;
-        top: 10px;
-        right: 10px;
+        top: 100px;
+        right: -1px;
         width: 200px;
         background-color: white;
         border: 1px solid #ccc;
-        padding: 10px;
+        padding: 20px;
         z-index: 1;">
         <div id="currentInfo">
             <!-- 显示今天日期及所选城市信息 -->
@@ -56,6 +59,8 @@
             <p id="selectedCityInfo"></p>
         </div>
     </div>
+
+
     <div id="multipleCityWeatherList">
         <!-- 多个城市天气将在此显示 -->
     </div>
@@ -87,14 +92,17 @@
             const weatherData = await weatherResponse.json();
             return weatherData;
         }
-    function getNextWeekday() {
-        const now = new Date();
-        now.setDate(now.getDate() + 1); // 设置为明天日期
-        return now.toLocaleDateString('zh-CN', { weekday: 'long' });
-    }
+    function getNextDateAndWeekday() {
+           const now = new Date();
+           now.setDate(now.getDate() + 1); // 设置为明天日期
+           const tomorrowDate = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }); // 格式化为中文的月和日
+           const tomorrowWeekday = now.toLocaleDateString('zh-CN', { weekday: 'long' }); // 获取明天星期几
+           return { date: tomorrowDate, weekday: tomorrowWeekday };
+}
 
     async function displaySequentialWeatherForCities(cities) {
-        document.getElementById('todayWeekday').textContent = `明天是：${getNextWeekday()}`;
+           const { date, weekday } = getNextDateAndWeekday();
+           document.getElementById('todayWeekday').textContent = `${date} ${weekday}`;
         let selectedCityInfoContent = '';
         for (const city of cities) {
             try {
@@ -167,9 +175,44 @@
             }
         });
 
+
+document.getElementById('copyWeatherInfo').addEventListener('click', () => {
+    const selectedCityInfo = document.getElementById('selectedCityInfo');
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(selectedCityInfo.innerText);
+        alert('天气信息已复制到剪贴板');
+    } else {
+        // 对于不支持 Clipboard API 的浏览器，可以尝试模拟复制行为
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = selectedCityInfo.innerText;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+        alert('天气信息已复制到剪贴板');
+    }
+});
+
+
         // 页面加载完成后加载已保存城市
         loadCityOptions();
     </script>
+
+
+<style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            width: fit-content;
+            margin-top: 1em;
+        }
+    </style>
 
 </body>
 </html>
