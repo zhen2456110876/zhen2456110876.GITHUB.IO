@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天气查询</title>
     <style>
-        #citiesList label {
+        #citiesList label,
+        #multipleCityWeatherList li {
             display: block;
             margin-bottom: 5px;
         }
@@ -13,23 +14,29 @@
             list-style-type: none;
             padding: 0;
         }
-        #multipleCityWeatherList li {
-            margin-bottom: 1em;
-        }
         #rightInfoBox {
-
-            top: 10px;
-            right: 10px;
             width: 200px;
             background-color: white;
             border: 1px solid #ccc;
             padding: 10px;
-            z-index: 1;
+            margin-top: 20px; /* 添加上外边距使其显示在下方 */
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            width: fit-content;
+            margin-top: 1em;
         }
     </style>
 </head>
 <body>
 
+<div class="container">
     <h2>请选择或添加城市查询天气</h2>
     
     <div id="citiesList"></div>
@@ -45,25 +52,17 @@
         <button id="copyWeatherInfo">一键复制天气信息</button>
     </div>
 
-     <div id="rightInfoBox" style="
-        top: 100px;
-        right: -1px;
-        width: 200px;
-        background-color: white;
-        border: 1px solid #ccc;
-        padding: 20px;
-        z-index: 1;">
+    <div id="multipleCityWeatherList">
+        <!-- 多个城市天气将在此显示 -->
+    </div>
+
+    <div id="rightInfoBox">
         <div id="currentInfo">
-            <!-- 显示今天日期及所选城市信息 -->
             <p id="todayWeekday"></p>
             <p id="selectedCityInfo"></p>
         </div>
     </div>
-
-
-    <div id="multipleCityWeatherList">
-        <!-- 多个城市天气将在此显示 -->
-    </div>
+</div>
 
     <script>
         const apiKey = '3aa5d4d50fc64d6287801928ab1d6082'; // 替换为您的QWeather API密钥
